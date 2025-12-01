@@ -1,0 +1,8 @@
+Payroll-SQL-Practice/
+│
+├─ 01_create_table.sql
+├─ 02_insert_data.sql
+├─ 03_calculate_deductions.sql
+├─ 04_calculate_payroll.sql
+├─ 05_final_select.sql
+└─ README.md
