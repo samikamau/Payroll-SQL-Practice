@@ -20,38 +20,59 @@ VALUES
 ('James Musyoka', 15000),
 ('Onesmus Ochieng', 24000),
 ('Monicah Ngure', 50000),
-('Eunice Mumbi', 0),
-('James Kiarie', 1000000);
+('Eunice Mumbi', 72000),
+('James Kiarie', 800000);
 
 -- Step 3: Calculate deductions (NSSF, SHA, AHL)
 UPDATE jan_payroll
 SET
-    nssf = ROUND(LEAST(gross_amount * 0.06, 4320), 2),
-    sha  = ROUND(gross_amount * 0.0275, 2),
-    ahl  = ROUND(gross_amount * 0.015, 2);
+nssf = ROUND(LEAST(gross_amount*0.06,4320),2),
+sha = ROUND(gross_amount*0.0275,2),
+ahl= ROUND(gross_amount*0.015,2);
 
 -- Step 4: Calculate taxable income
-UPDATE jan_payroll
-SET taxable_income = gross_amount - (nssf + sha + ahl);
 
--- Step 5: Calculate PAYE using progressive tax bands
+UPDATE jan_payroll
+SET
+taxable_income = gross_amount - (nssf+sha+ahl);
+
 WITH paye_calc AS (
-    SELECT
-        id,
-        taxable_income,
-        CASE
-            WHEN taxable_income <= 24000 THEN ROUND(GREATEST(taxable_income * 0.10 - 2400,0),2)
-            WHEN taxable_income <= 32333 THEN ROUND(GREATEST(24000*0.10 + (taxable_income-24000)*0.25 - 2400,0),2)
-            WHEN taxable_income <= 500000 THEN ROUND(GREATEST(24000*0.10 + (32333-24000)*0.25 + (taxable_income-32333)*0.30 - 2400,0),2)
-            WHEN taxable_income <= 800000 THEN ROUND(GREATEST(24000*0.10 + (32333-24000)*0.25 + (500000-32333)*0.30 + (taxable_income-500000)*0.325 - 2400,0),2)
-            ELSE ROUND(GREATEST(24000*0.10 + (32333-24000)*0.25 + (500000-32333)*0.30 + (800000-500000)*0.325 + (taxable_income-800000)*0.35 - 2400,0),2)
-        END AS paye
-    FROM jan_payroll
+SELECT 
+id,
+taxable_income,
+
+CASE
+	WHEN taxable_income <= 24000 
+		THEN ROUND(GREATEST(taxable_income * 0.10 - 2400,0),2)
+    WHEN taxable_income <= 32333 
+		THEN ROUND(GREATEST(24000*0.10 + 
+		(taxable_income-24000)*0.25 - 2400,0),2)
+    WHEN taxable_income <= 500000 
+		THEN ROUND(GREATEST(24000*0.10 + 
+		(32333-24000)*0.25 + 
+		(taxable_income-32333)*0.30 - 2400,0),2)
+    WHEN taxable_income <= 800000 
+		THEN ROUND(GREATEST(24000*0.10 + 
+		(32333-24000)*0.25 + 
+		(500000-32333)*0.30 + 
+		(taxable_income-500000)*0.325 - 2400,0),2)
+    ELSE ROUND(GREATEST(24000*0.10 + 
+		(32333-24000)*0.25 + 
+		(500000-32333)*0.30 +
+		(800000-500000)*0.325 +
+		(taxable_income-800000)*0.35 - 2400,0),2)
+		
+	END AS paye			
+	FROM jan_payroll
 )
+
 UPDATE jan_payroll AS x
+
 SET paye = z.paye
-FROM paye_calc AS z
-WHERE x.id = z.id;
+ FROM 
+ paye_calc AS z
+ WHERE
+ x.id = z.id;
 
 -- Step 6: Calculate net pay
 UPDATE jan_payroll
